@@ -134,7 +134,7 @@ export function Chat() {
   };
 
   return (
-    <div className="flex flex-1 min-h-0 bg-[#11111b]">
+    <div className="flex h-[calc(100vh-0px)] bg-[#11111b]">
       {/* Sidebar de canales */}
       <div className="w-64 bg-[#181825] border-r border-gray-700 flex flex-col">
         <div className="p-4 border-b border-gray-700">

@@ -14,12 +14,17 @@ import {
   Moon,
   Sunrise,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  ExternalLink,
+  Edit,
+  Copy,
+  Trash2,
 } from 'lucide-react';
 import { useNotesStore } from '../store/notesStore';
 import { useAuthStore } from '../store/authStore';
 import { useMeetingsStore } from '../store/meetingsStore';
 import { useSprintStore } from '../store/sprintStore';
+import { ContextMenu, useContextMenu } from '../components/ContextMenu';
 import { format, isToday, isTomorrow, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -33,10 +38,11 @@ function getGreeting(): { text: string; icon: typeof Sun } {
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { notes, fetchNotes, isLoading } = useNotesStore();
+  const { notes, fetchNotes, isLoading, deleteNote } = useNotesStore();
   const { user } = useAuthStore();
   const { meetings, fetchMeetings } = useMeetingsStore();
   const { currentSprint, fetchSprints } = useSprintStore();
+  const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
 
   useEffect(() => {
     fetchNotes();
@@ -129,6 +135,7 @@ export function Dashboard() {
                 <div 
                   key={task.id} 
                   onClick={() => navigate(`/notes/${task.id}`)}
+                  onContextMenu={(e) => handleContextMenu(e, task)}
                   className="flex items-center gap-3 p-3 bg-[#181825]/50 rounded-lg hover:bg-[#181825] transition-colors cursor-pointer"
                 >
                   <CheckSquare size={16} className="text-yellow-400" />
@@ -325,6 +332,7 @@ export function Dashboard() {
                   <div
                     key={note.id}
                     onClick={() => navigate(`/notes/${note.id}`)}
+                    onContextMenu={(e) => handleContextMenu(e, note)}
                     className="flex items-center gap-4 p-3 rounded-lg hover:bg-[#1e1e2e] transition-colors cursor-pointer"
                   >
                     <div className={`p-2 rounded-lg ${
@@ -424,6 +432,39 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={closeContextMenu}
+          items={[
+            {
+              label: 'Abrir',
+              icon: <ExternalLink size={16} />,
+              onClick: () => navigate(`/notes/${contextMenu.data.id}`),
+            },
+            {
+              label: 'Editar',
+              icon: <Edit size={16} />,
+              onClick: () => navigate(`/notes/${contextMenu.data.id}`),
+            },
+            {
+              label: 'Copiar título',
+              icon: <Copy size={16} />,
+              onClick: () => navigator.clipboard.writeText(contextMenu.data.title),
+            },
+            { divider: true, label: '', onClick: () => {} },
+            {
+              label: 'Eliminar',
+              icon: <Trash2 size={16} />,
+              onClick: () => deleteNote(contextMenu.data.id),
+              variant: 'danger',
+            },
+          ]}
+        />
+      )}
     </div>
   );
 }

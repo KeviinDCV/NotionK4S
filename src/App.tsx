@@ -12,6 +12,8 @@ import { Calendar } from './pages/Calendar';
 import { Notepad } from './pages/Notepad';
 import { Meetings } from './pages/Meetings';
 import { Chat } from './pages/Chat';
+import { Kanban } from './pages/Kanban';
+import { Expenses } from './pages/Expenses';
 import { GlobalSearch } from './components/GlobalSearch';
 import { useAuthStore } from './store/authStore';
 import './index.css';
@@ -62,11 +64,13 @@ function App() {
         <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
         <Route path="/notes/new" element={<ProtectedRoute><NoteEditor /></ProtectedRoute>} />
         <Route path="/notes/:id" element={<ProtectedRoute><NoteEditor /></ProtectedRoute>} />
+        <Route path="/kanban" element={<ProtectedRoute><Kanban /></ProtectedRoute>} />
         <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
         <Route path="/notepad" element={<ProtectedRoute><Notepad /></ProtectedRoute>} />
         <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
         {/* Default redirect */}

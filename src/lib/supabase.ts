@@ -236,3 +236,36 @@ export interface ChatMessage {
     avatar_url?: string;
   };
 }
+
+// Expenses
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  icon?: string;
+  color: string;
+  created_at: string;
+}
+
+export interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  currency: string;
+  category_id?: string;
+  vendor?: string;
+  invoice_number?: string;
+  expense_date: string;
+  payment_method?: 'cash' | 'card' | 'transfer' | 'check' | 'other';
+  status: 'pending' | 'approved' | 'rejected' | 'paid';
+  notes?: string;
+  receipt_url?: string;
+  created_by: string;
+  approved_by?: string;
+  created_at: string;
+  updated_at: string;
+  category?: ExpenseCategory;
+  creator?: {
+    full_name: string;
+    email: string;
+  };
+}

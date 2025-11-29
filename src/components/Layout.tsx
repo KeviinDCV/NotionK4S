@@ -9,7 +9,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="flex h-screen bg-[#11111b] text-white overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-auto flex flex-col">
+      <main className="flex-1 overflow-auto">
         {children}
       </main>
     </div>

@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Loader2,
   MessageSquare,
+  Kanban,
 } from 'lucide-react';
 import { useNotesStore } from '../store/notesStore';
 import { usePersonalNotesStore } from '../store/personalNotesStore';
@@ -241,6 +242,7 @@ export function GlobalSearch() {
               <p className="text-gray-500 text-sm mb-4">Accesos rápidos</p>
               <div className="grid grid-cols-2 gap-2">
                 {[
+                  { label: 'Kanban', path: '/kanban', icon: Kanban },
                   { label: 'Notas', path: '/notes', icon: FileText },
                   { label: 'Tareas', path: '/notes?type=task', icon: CheckSquare },
                   { label: 'Reuniones', path: '/meetings', icon: Video },

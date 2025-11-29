@@ -10,6 +10,8 @@ import {
   LogOut,
   Plus,
   MessageSquare,
+  Kanban,
+  DollarSign,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { NotificationsDropdown } from './NotificationsDropdown';
@@ -17,9 +19,11 @@ import { NotificationsDropdown } from './NotificationsDropdown';
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/notes', icon: ClipboardList, label: 'Gestión' },
+  { to: '/kanban', icon: Kanban, label: 'Kanban' },
   { to: '/calendar', icon: Calendar, label: 'Calendario' },
   { to: '/meetings', icon: Video, label: 'Reuniones' },
   { to: '/chat', icon: MessageSquare, label: 'Chat' },
+  { to: '/expenses', icon: DollarSign, label: 'Gastos' },
   { to: '/notepad', icon: FileText, label: 'Notepad' },
   { to: '/team', icon: Users, label: 'Equipo' },
   { to: '/settings', icon: Settings, label: 'Configuración' },
