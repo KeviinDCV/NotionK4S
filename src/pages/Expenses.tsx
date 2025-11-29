@@ -49,6 +49,7 @@ export function Expenses() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<'all' | 'month' | 'custom'>('month');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const [formData, setFormData] = useState({
     description: '',
@@ -178,14 +179,14 @@ export function Expenses() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <DollarSign size={28} className="text-green-400" />
+            <DollarSign size={28} className="text-blue-400" />
             Gastos Empresariales
           </h1>
           <p className="text-gray-400 mt-1">Registra y gestiona los gastos de la empresa</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
           <Plus size={20} />
           Nuevo Gasto
@@ -282,8 +283,8 @@ export function Expenses() {
       </div>
 
       {/* Expenses Table */}
-      <div className="bg-[#181825] rounded-xl border border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-[#181825] rounded-xl border border-gray-700">
+        <div className="overflow-x-auto overflow-y-visible">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">
@@ -364,7 +365,7 @@ export function Expenses() {
                                 className="fixed inset-0 z-10"
                                 onClick={() => setActiveMenu(null)}
                               />
-                              <div className="absolute right-0 top-10 bg-[#1e1e2e] border border-gray-700 rounded-lg shadow-xl z-20 py-1 min-w-[140px]">
+                              <div className="absolute right-0 bottom-full mb-1 bg-[#1e1e2e] border border-gray-700 rounded-lg shadow-xl z-20 py-1 min-w-[140px]">
                                 <button
                                   onClick={() => {
                                     handleOpenModal(expense);
@@ -478,18 +479,57 @@ export function Expenses() {
               </div>
 
               {/* Categoría */}
-              <div>
+              <div className="relative">
                 <label className="block text-sm text-gray-400 mb-2">Categoría</label>
-                <select
-                  value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                  className="w-full bg-[#11111b] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  className="w-full bg-[#11111b] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 text-left flex items-center justify-between"
                 >
-                  <option value="">Seleccionar categoría</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
-                  ))}
-                </select>
+                  <span>
+                    {formData.category_id 
+                      ? (() => {
+                          const cat = categories.find(c => c.id === formData.category_id);
+                          return cat ? `${cat.icon} ${cat.name}` : 'Seleccionar categoría';
+                        })()
+                      : 'Seleccionar categoría'
+                    }
+                  </span>
+                  <svg className={`w-4 h-4 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showCategoryDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowCategoryDropdown(false)} />
+                    <div className="absolute z-20 w-full mt-1 bg-[#1e1e2e] border border-gray-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, category_id: '' });
+                          setShowCategoryDropdown(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-gray-400 hover:bg-[#181825] transition-colors"
+                      >
+                        Sin categoría
+                      </button>
+                      {categories.map(cat => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, category_id: cat.id });
+                            setShowCategoryDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2 text-left hover:bg-[#181825] transition-colors flex items-center gap-2 ${formData.category_id === cat.id ? 'bg-blue-500/20 text-blue-400' : 'text-white'}`}
+                        >
+                          <span>{cat.icon}</span>
+                          <span>{cat.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Proveedor y Factura */}
@@ -565,7 +605,7 @@ export function Expenses() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   {editingExpense ? 'Guardar Cambios' : 'Registrar Gasto'}
                 </button>
