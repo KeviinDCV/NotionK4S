@@ -10,9 +10,12 @@ import {
   MoreVertical,
   Trash2,
   Edit,
+  Copy,
+  ExternalLink,
 } from 'lucide-react';
 import { useNotesStore } from '../store/notesStore';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { ContextMenu, useContextMenu } from '../components/ContextMenu';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -42,6 +45,7 @@ export function Notes() {
     noteId: null,
     noteTitle: '',
   });
+  const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
 
   useEffect(() => {
     fetchNotes();
@@ -72,6 +76,9 @@ export function Notes() {
       default: return <FileText size={16} />;
     }
   };
+
+  // Filtrar subtareas - solo mostrar tareas principales (sin parent_id)
+  const mainNotes = notes.filter(note => !note.parent_id);
 
   return (
     <div className="p-6">
@@ -128,12 +135,14 @@ export function Notes() {
         <div className="flex items-center justify-center py-12">
           <div className="w-10 h-10 border-2 border-blue-500/30 border-t-primary-500 rounded-full animate-spin" />
         </div>
-      ) : notes.length > 0 ? (
+      ) : mainNotes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {notes.map((note) => (
+          {mainNotes.map((note) => (
             <div
               key={note.id}
-              className="bg-[#181825] rounded-xl border border-gray-700 p-4 hover:border-gray-700 transition-colors group"
+              className="bg-[#181825] rounded-xl border border-gray-700 p-4 hover:border-gray-600 transition-colors group cursor-pointer"
+              onClick={() => navigate(`/notes/${note.id}`)}
+              onContextMenu={(e) => handleContextMenu(e, note)}
             >
               {/* Card Header */}
               <div className="flex items-start justify-between mb-3">
@@ -146,7 +155,7 @@ export function Notes() {
                   {getTypeIcon(note.type)}
                   {note.type.charAt(0).toUpperCase() + note.type.slice(1)}
                 </div>
-                <div className="relative">
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => setActiveMenu(activeMenu === note.id ? null : note.id)}
                     className="p-1 rounded hover:bg-[#1e1e2e] text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all"
@@ -220,6 +229,39 @@ export function Notes() {
         confirmText="Eliminar"
         variant="danger"
       />
+
+      {/* Context Menu (Click Derecho) */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={closeContextMenu}
+          items={[
+            {
+              label: 'Abrir',
+              icon: <ExternalLink size={16} />,
+              onClick: () => navigate(`/notes/${contextMenu.data.id}`),
+            },
+            {
+              label: 'Editar',
+              icon: <Edit size={16} />,
+              onClick: () => navigate(`/notes/${contextMenu.data.id}`),
+            },
+            {
+              label: 'Copiar título',
+              icon: <Copy size={16} />,
+              onClick: () => navigator.clipboard.writeText(contextMenu.data.title),
+            },
+            { divider: true, label: '', onClick: () => {} },
+            {
+              label: 'Eliminar',
+              icon: <Trash2 size={16} />,
+              onClick: () => openDeleteModal(contextMenu.data.id, contextMenu.data.title),
+              variant: 'danger',
+            },
+          ]}
+        />
+      )}
     </div>
   );
 }

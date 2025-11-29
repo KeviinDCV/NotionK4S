@@ -7,6 +7,12 @@ import { Dashboard } from './pages/Dashboard';
 import { Notes } from './pages/Notes';
 import { NoteEditor } from './pages/NoteEditor';
 import { Team } from './pages/Team';
+import { Settings } from './pages/Settings';
+import { Calendar } from './pages/Calendar';
+import { Notepad } from './pages/Notepad';
+import { Meetings } from './pages/Meetings';
+import { Chat } from './pages/Chat';
+import { GlobalSearch } from './components/GlobalSearch';
 import { useAuthStore } from './store/authStore';
 import './index.css';
 
@@ -43,6 +49,9 @@ function App() {
         v7_relativeSplatPath: true,
       }}
     >
+      {/* Búsqueda Global - Ctrl+K */}
+      <GlobalSearch />
+      
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
@@ -54,7 +63,11 @@ function App() {
         <Route path="/notes/new" element={<ProtectedRoute><NoteEditor /></ProtectedRoute>} />
         <Route path="/notes/:id" element={<ProtectedRoute><NoteEditor /></ProtectedRoute>} />
         <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><div className="p-6 text-white">Configuración - Próximamente</div></ProtectedRoute>} />
+        <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+        <Route path="/notepad" element={<ProtectedRoute><Notepad /></ProtectedRoute>} />
+        <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/login" replace />} />

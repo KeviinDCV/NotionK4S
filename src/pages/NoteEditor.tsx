@@ -12,6 +12,7 @@ import {
   Send,
   Trash2,
   Clock,
+  Calendar,
   PlayCircle,
   CheckCircle,
   XCircle,
@@ -60,6 +61,8 @@ export function NoteEditor() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const parentFromUrl = searchParams.get('parent');
+  const dateFromUrl = searchParams.get('date');
+  const typeFromUrl = searchParams.get('type') as Note['type'] | null;
   const { notes, createNote, updateNote } = useNotesStore();
   const { user } = useAuthStore();
   const { comments, fetchComments, addComment, deleteComment } = useCommentsStore();
@@ -70,13 +73,15 @@ export function NoteEditor() {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    type: 'task' as Note['type'], // Default a task para subtareas
+    type: (typeFromUrl || 'task') as Note['type'],
     status: 'pending' as Note['status'],
     priority: 'medium' as Note['priority'],
     project: '',
     tags: [] as string[],
     assigned_to: '' as string,
     parent_id: parentFromUrl || '',
+    due_date: dateFromUrl || '' as string,
+    estimated_hours: '' as string,
   });
   const [tagInput, setTagInput] = useState('');
 
@@ -84,11 +89,33 @@ export function NoteEditor() {
   const currentNote = notes.find(n => n.id === id);
   const subtasks = notes.filter(n => n.parent_id === id);
   const parentNote = currentNote?.parent_id ? notes.find(n => n.id === currentNote.parent_id) : null;
+  const parentNoteFromUrl = parentFromUrl ? notes.find(n => n.id === parentFromUrl) : null;
+  const isCreatingSubtask = !isEditing && !!parentFromUrl;
 
   // Cargar miembros del equipo
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers]);
+
+  // Resetear formulario cuando se crea una nueva nota/subtarea
+  useEffect(() => {
+    if (!id) {
+      // Es una nueva nota, resetear el formulario
+      setFormData({
+        title: '',
+        content: '',
+        type: (typeFromUrl || 'task') as Note['type'],
+        status: 'pending' as Note['status'],
+        priority: 'medium' as Note['priority'],
+        project: '',
+        tags: [],
+        assigned_to: '',
+        parent_id: parentFromUrl || '',
+        due_date: dateFromUrl || '',
+        estimated_hours: '',
+      });
+    }
+  }, [id, parentFromUrl, dateFromUrl, typeFromUrl]);
 
   useEffect(() => {
     if (id) {
@@ -104,6 +131,8 @@ export function NoteEditor() {
           tags: note.tags || [],
           assigned_to: note.assigned_to || '',
           parent_id: note.parent_id || '',
+          due_date: note.due_date || '',
+          estimated_hours: note.estimated_hours?.toString() || '',
         });
         fetchComments(id);
       }
@@ -134,6 +163,8 @@ export function NoteEditor() {
     const noteData = {
       ...formData,
       created_by: user?.id,
+      estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : null,
+      due_date: formData.due_date || null,
     };
 
     let result;
@@ -146,7 +177,12 @@ export function NoteEditor() {
     setIsLoading(false);
 
     if (!result.error) {
-      navigate('/notes');
+      // Si es subtarea, volver a la tarea padre; si no, ir a la lista
+      if (isCreatingSubtask && parentFromUrl) {
+        navigate(`/notes/${parentFromUrl}`);
+      } else {
+        navigate('/notes');
+      }
     }
   };
 
@@ -172,17 +208,25 @@ export function NoteEditor() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
-          onClick={() => navigate('/notes')}
+          onClick={() => isCreatingSubtask ? navigate(`/notes/${parentFromUrl}`) : navigate('/notes')}
           className="p-2 rounded-lg hover:bg-[#181825] text-gray-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={24} />
         </button>
         <div>
           <h1 className="text-2xl font-bold text-white">
-            {isEditing ? 'Editar Nota' : 'Nueva Nota'}
+            {isEditing 
+              ? 'Editar ' + noteTypes.find(t => t.value === formData.type)?.label 
+              : isCreatingSubtask 
+                ? 'Nueva Subtarea' 
+                : 'Nueva ' + noteTypes.find(t => t.value === formData.type)?.label}
           </h1>
           <p className="text-gray-400 mt-1">
-            {isEditing ? 'Modifica los detalles de la nota' : 'Crea una nueva nota o registro'}
+            {isEditing 
+              ? 'Modifica los detalles' 
+              : isCreatingSubtask && parentNoteFromUrl
+                ? `Subtarea de: ${parentNoteFromUrl.title}`
+                : 'Crea un nuevo registro'}
           </p>
         </div>
       </div>
@@ -292,14 +336,43 @@ export function NoteEditor() {
               className="w-full bg-[#181825] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
             >
               <option value="">Sin asignar</option>
-              {members
-                .filter(m => m.id !== user?.id) // Excluir usuario actual
-                .map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.full_name}
-                  </option>
-                ))}
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.full_name} {member.id === user?.id ? '(Yo)' : ''}
+                </option>
+              ))}
             </select>
+          </div>
+        </div>
+
+        {/* Due Date & Estimated Hours */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
+              <Calendar size={16} />
+              Fecha de vencimiento
+            </label>
+            <input
+              type="date"
+              value={formData.due_date}
+              onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+              className="w-full bg-[#181825] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
+              <Clock size={16} />
+              Horas estimadas
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              value={formData.estimated_hours}
+              onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value })}
+              placeholder="Ej: 4.5"
+              className="w-full bg-[#181825] border border-gray-700 rounded-lg py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+            />
           </div>
         </div>
 

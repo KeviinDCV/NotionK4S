@@ -20,27 +20,41 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
   fetchNotifications: async () => {
     if (!isSupabaseConfigured || !supabase) {
+      console.log('[Notifications] Supabase not configured');
       set({ isLoading: false });
       return;
     }
 
     set({ isLoading: true });
     try {
+      // Obtener el usuario actual
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('[Notifications] Fetching for user:', user?.id);
+      
+      if (!user) {
+        console.log('[Notifications] No user logged in');
+        set({ isLoading: false });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('notifications')
         .select(`
           *,
           from_user:profiles!notifications_from_user_id_fkey(full_name, avatar_url)
         `)
+        .eq('user_id', user.id) // Filtrar explícitamente por usuario
         .order('created_at', { ascending: false })
         .limit(50);
+
+      console.log('[Notifications] Fetch result:', { data, error });
 
       if (error) throw error;
       
       const unreadCount = (data || []).filter(n => !n.read).length;
       set({ notifications: data || [], unreadCount, isLoading: false });
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('[Notifications] Error fetching:', error);
       set({ isLoading: false });
     }
   },
@@ -129,6 +143,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       return () => {};
     }
 
+    let isSubscribed = false;
+    
     const channel = supabase
       .channel('notifications-changes')
       .on(
@@ -147,10 +163,14 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          isSubscribed = true;
+        }
+      });
 
     return () => {
-      if (supabase) {
+      if (supabase && channel && isSubscribed) {
         supabase.removeChannel(channel);
       }
     };

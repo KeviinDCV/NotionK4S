@@ -1,23 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, MessageSquare, UserPlus, Check, Trash2, CheckCheck } from 'lucide-react';
+import { Bell, MessageSquare, UserPlus, Check, Trash2, CheckCheck, Share2, Video } from 'lucide-react';
 import { useNotificationsStore } from '../store/notificationsStore';
 import { useAuthStore } from '../store/authStore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Notification } from '../lib/supabase';
 
-const typeIcons = {
+const typeIcons: Record<Notification['type'], any> = {
   comment: MessageSquare,
   assignment: UserPlus,
   status_change: Check,
   mention: MessageSquare,
+  share: Share2,
+  meeting_invite: Video,
 };
 
-const typeColors = {
+const typeColors: Record<Notification['type'], string> = {
   comment: 'bg-blue-500',
   assignment: 'bg-green-500',
   status_change: 'bg-yellow-500',
   mention: 'bg-purple-500',
+  share: 'bg-indigo-500',
+  meeting_invite: 'bg-teal-500',
 };
 
 export function NotificationsDropdown() {
@@ -56,9 +61,16 @@ export function NotificationsDropdown() {
 
   const handleNotificationClick = async (notification: typeof notifications[0]) => {
     await markAsRead(notification.id);
-    if (notification.note_id) {
+    
+    // Navegar según el tipo de notificación
+    if (notification.type === 'meeting_invite') {
+      navigate('/meetings');
+    } else if (notification.type === 'share' || notification.personal_note_id) {
+      navigate('/notepad');
+    } else if (notification.note_id) {
       navigate(`/notes/${notification.note_id}`);
     }
+    
     setIsOpen(false);
   };
 
@@ -79,7 +91,7 @@ export function NotificationsDropdown() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="fixed right-4 top-16 w-80 max-w-[calc(100vw-2rem)] bg-[#181825] rounded-xl border border-gray-700 shadow-xl z-50 overflow-hidden">
+        <div className="absolute left-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-[#181825] rounded-xl border border-gray-700 shadow-xl z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
             <h3 className="font-semibold text-white">Notificaciones</h3>

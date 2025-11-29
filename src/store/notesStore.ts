@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { supabase, isSupabaseConfigured, Note } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, Note, createNotification } from '../lib/supabase';
 
 interface NotesState {
   notes: Note[];
@@ -104,6 +104,20 @@ export const useNotesStore = create<NotesState>()(
             .single();
 
           if (error) return { error: error.message };
+
+          // Notificar al usuario asignado (si es diferente al creador)
+          if (cleanedNote.assigned_to && cleanedNote.assigned_to !== cleanedNote.created_by) {
+            const currentUser = (await supabase.auth.getUser()).data.user;
+            await createNotification({
+              userId: cleanedNote.assigned_to,
+              type: 'assignment',
+              title: 'Nueva tarea asignada',
+              message: `Te han asignado la tarea "${data.title}"`,
+              noteId: data.id,
+              fromUserId: currentUser?.id,
+            });
+          }
+
           set((state) => ({ notes: [data, ...state.notes] }));
           return { error: null };
         } catch (err: any) {
@@ -143,6 +157,13 @@ export const useNotesStore = create<NotesState>()(
             cleanedUpdates.project = updates.project || null;
           }
 
+          // Obtener la nota actual para verificar cambios en asignación
+          const { data: currentNote } = await supabase
+            .from('notes')
+            .select('assigned_to, title')
+            .eq('id', id)
+            .single();
+
           const { data, error } = await supabase
             .from('notes')
             .update(cleanedUpdates)
@@ -151,6 +172,21 @@ export const useNotesStore = create<NotesState>()(
             .single();
 
           if (error) return { error: error.message };
+
+          // Notificar si se cambió la asignación a un nuevo usuario
+          if (cleanedUpdates.assigned_to && 
+              cleanedUpdates.assigned_to !== currentNote?.assigned_to) {
+            const currentUser = (await supabase.auth.getUser()).data.user;
+            await createNotification({
+              userId: cleanedUpdates.assigned_to,
+              type: 'assignment',
+              title: 'Tarea asignada',
+              message: `Te han asignado la tarea "${data.title}"`,
+              noteId: id,
+              fromUserId: currentUser?.id,
+            });
+          }
+
           set((state) => ({
             notes: state.notes.map((n) => (n.id === id ? data : n)),
             selectedNote: state.selectedNote?.id === id ? data : state.selectedNote,
